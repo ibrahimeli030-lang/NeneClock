@@ -6,7 +6,88 @@
     <title>World Clock - jessClock</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.37/moment-timezone-with-data-1970-2030.min.js"></script>
-    <link rel="stylesheet" href="style.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(135deg, #e0e7ff, #fce7f3);
+        color: #1f2937;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 16px 20px;
+      }
+      .container {
+        width: 100%;
+        max-width: 600px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        margin: 0 0 20px;
+        text-align: center;
+      }
+      select {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 2px solid #c7d2fe;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        background: #fff;
+      }
+      .city {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 0;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .city h2 {
+        margin: 0 0 4px;
+        font-size: 22px;
+      }
+      .date {
+        color: #6b7280;
+        font-size: 14px;
+      }
+      .time {
+        font-size: 32px;
+        font-weight: 600;
+      }
+      .time small {
+        font-size: 16px;
+      }
+      #back {
+        display: none;
+        margin-top: 16px;
+        color: #4f46e5;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      #back:hover {
+        text-decoration: underline;
+      }
+      footer {
+        margin-top: 24px;
+        font-size: 14px;
+        text-align: center;
+      }
+      footer a {
+        color: #4f46e5;
+      }
+      @media (max-width: 480px) {
+        .time {
+          font-size: 24px;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -47,6 +128,87 @@
       >
     </footer>
 
-    <script src="index.js"></script>
+    <script>
+      const defaultZones = {
+        "los-angeles": "America/Los_Angeles",
+        paris: "Europe/Paris",
+      };
+
+      const citySelect = document.querySelector("#city");
+      const citiesBox = document.querySelector("#cities");
+      const backLink = document.querySelector("#back");
+      let selectedZone = null;
+
+      function fmtDate(t) {
+        return t.format("MMMM Do YYYY");
+      }
+      function fmtTime(t) {
+        return t.format("h:mm:ss") + " <small>" + t.format("A") + "</small>";
+      }
+
+      function renderDefaults() {
+        for (const id in defaultZones) {
+          const el = document.getElementById(id);
+          if (!el) continue;
+          const t = moment().tz(defaultZones[id]);
+          el.querySelector(".date").innerHTML = fmtDate(t);
+          el.querySelector(".time").innerHTML = fmtTime(t);
+        }
+      }
+
+      function renderSelected() {
+        const t = moment().tz(selectedZone);
+        const name = selectedZone.replace(/_/g, " ").split("/").pop();
+        citiesBox.innerHTML =
+          '<div class="city"><div><h2>' +
+          name +
+          '</h2><div class="date">' +
+          fmtDate(t) +
+          '</div></div><div class="time">' +
+          fmtTime(t) +
+          "</div></div>";
+      }
+
+      function showAll() {
+        selectedZone = null;
+        citySelect.value = "";
+        backLink.style.display = "none";
+        citiesBox.innerHTML = Object.keys(defaultZones)
+          .map(function (id) {
+            const label = id === "los-angeles" ? "Los Angeles" : "Paris";
+            return (
+              '<div class="city" id="' +
+              id +
+              '"><div><h2>' +
+              label +
+              '</h2><div class="date"></div></div><div class="time"></div></div>'
+            );
+          })
+          .join("");
+        renderDefaults();
+      }
+
+      citySelect.addEventListener("change", function (event) {
+        const value = event.target.value;
+        if (!value) {
+          showAll();
+          return;
+        }
+        selectedZone = value === "current" ? moment.tz.guess() : value;
+        backLink.style.display = "inline-block";
+        renderSelected();
+      });
+
+      backLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        showAll();
+      });
+
+      renderDefaults();
+      setInterval(function () {
+        if (selectedZone) renderSelected();
+        else renderDefaults();
+      }, 1000);
+    </script>
   </body>
 </html>
